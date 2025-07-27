@@ -17,32 +17,32 @@ tvec = Sol[0,:]
 eps = 1*10**(-4)
 
 
-Monodromy = Sol[7:,-1].reshape(6,6).transpose() # Monodromy matrix is STM after one full period of periodic orbit
+Monodromy = Sol[7:,-1].reshape(6,6).transpose()  # Monodromy matrix is STM after one orbital period
 
-eigvals, eigvecs = np.linalg.eig(Monodromy) # Calculate eigen-vectors and values of monodromy matrix
+eigvals, eigvecs = np.linalg.eig(Monodromy)      # Calculate eigen-vectors and values of monodromy matrix
 print(eigvals, '\n')
 print(eigvecs, '\n')
 
 ###############
 eig = 1 # Select the desired (correct) eigen value and vector to create perturbation vector
 lambdaU = eigvals[eig] # Get the desired eigenvalue
-vU = eigvecs[:,eig].reshape(6,1)              # Get the desired eigenvector for eigval of 1.026
+vU = eigvecs[:,eig].reshape(6,1)                 # Get the desired eigenvector for eigval of 1.026
 
 
 ## Create initial conditions of all the sampled states of the orbit
-samples = 20 # Select number of trajectories to sample from orbit to create manifold    #round(np.size(states,axis=1)/200)
-h = int(np.floor((len(tvec)-1)/samples)) # Iteration step value. Used to properly sample across periodic orbit
-pertVecs = np.zeros((6, 2*samples)) # Pre-allocate matrix sized to hold each perturbed initial state vector. Each is 6x1
+samples = 20                                     # Select number of trajectories to sample from orbit to create manifold 
+h = int(np.floor((len(tvec)-1)/samples))         # Orbital state step value. Used to properly sample across periodic orbit
+pertVecs = np.zeros((6, 2*samples))              # Pre-allocate matrix sized to hold each perturbed initial state vector. Each is 6x1
 
 i=0
 # Get delta vectors at a sample of points in the orbit
-for point in np.arange(0,int(h*samples), h):   # at each time from original solved orbit, get the STM, multiply it by vU and scale, 
-    STM = Sol[7:,point].reshape(6,6) # Extract STM at sample point and resize
-    delta = np.matmul(STM,vU) # Delta vector is STM*vU at sampled point in orbit
+for point in np.arange(0,int(h*samples), h):     # at each time from original solved orbit, get the STM, multiply it by vU and scale, 
+    STM = Sol[7:,point].reshape(6,6)             # Extract STM at sample point and resize
+    delta = np.matmul(STM,vU)                    # Delta vector is STM*vU at sampled point in orbit
 
     xUp = states[:,point].reshape(6,1) - eps* delta/np.linalg.norm(delta) # Create perturbed initial conditions at sampled point
     # xUn = states[:,point].reshape(6,1) - eps* delta/np.linalg.norm(delta)
-    pertVecs[:,i] = xUp[:,0] # Save perturbed IC state vector to big matrix for convenience
+    pertVecs[:,i] = xUp[:,0]                     # Save perturbed IC state vector to big matrix for convenience
     # pertVecs[:,i+1] = xUn[:,0]
     i+=1
 

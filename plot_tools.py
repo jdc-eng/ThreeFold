@@ -81,14 +81,14 @@ def PhasePortraits(solvec, tvec):
     
 
 
-def Orbit3D(solvec, time, mu, args={}):
+def Orbit3D(solvec, time, ax, args={}):
     _args = {'Frame': 'Synodic'}
     x = np.array(solvec[0,:])
     y = np.array(solvec[1,:])
     z = np.array(solvec[2,:])
-
+    mu = c.mustar
     
-    ax = plt.axes(projection='3d')
+    # ax = plt.axes(projection='3d')
     traj = ax.scatter(x,y,z, c=time, cmap = 'plasma', s=.5)
     ax.scatter(0,0,0, c='m', marker='*')
 
@@ -139,8 +139,8 @@ def Orbit3D(solvec, time, mu, args={}):
 
     plt.axis('equal')
     ax.legend()
-    plt.xlabel('X')
-    plt.ylabel('Y')
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
     plt.colorbar(traj)
 
 

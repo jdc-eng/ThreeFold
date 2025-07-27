@@ -19,13 +19,16 @@ tsteps = 6000
 step = (tbound-t0)/tsteps
 
 ## Create initial state vector
-STM0 = np.eye(6,6).reshape(1,36) # Initial STM is identity matrix
+STM0 = np.eye(6,6).reshape(1,36)[0]                  # Initial STM is identity matrix
 
 # Iniial position and velocity vector states
-x0 = np.array(slib.StateDict('Halo')) # Select from library
-# x0 = np.array([[ 0, 0, 0, 0, 0, 0 ]]) # Manually set initial states
+x0 = np.array(slib.StateDict('Halo'))             # Select from library
+# x0 = np.array([[ 0, 0, 0, 0, 0, 0 ]])           # Manually set initial states
+print(x0)
+print(STM0)
+state0 = np.concatenate((x0, STM0), axis=0)       # Concatenate initial position, velocity, and STM vectors into one
+print(state0)
 
-state0 = np.concatenate((x0, STM0), axis=1)[0] # Concatenate initial position, velocity, and STM vectors into one
 
 
 ## Integrate initial state with a certian integrator and dynamics model/reference frame
@@ -45,5 +48,7 @@ np.savetxt(os.path.join(sol_dir,"Halo.csv"), output, delimiter=",")
 
 
 ## Plotting
-pt.Orbit3D(SynSol.y, SynSol.t, c.mustar, args={'Frame':'Synodic'})                 # plot 3d orbit in synodic frame
+fig = plt.figure()
+ax = fig.add_subplot(1,1,1,projection='3d')
+pt.Orbit3D(SynSol.y, SynSol.t, ax, args={'Frame':'Synodic'})   # plot 3d orbit in synodic frame
 plt.show()
