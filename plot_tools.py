@@ -141,7 +141,7 @@ def Orbit3D(solvec, time, ax, args={}):
     ax.legend()
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
-    plt.colorbar(traj)
+    # plt.colorbar(traj)
 
 
 def PlotManifold(solvec, time, mu, ax, title,eigval, eigvec):

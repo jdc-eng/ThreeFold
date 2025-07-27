@@ -6,7 +6,7 @@ from matplotlib.collections import LineCollection
 import os
 #import cartopy.crs as ccrs
 #import cartopy.feature as cfeature
-from matplotlib.widgets import Button
+from matplotlib.widgets import Button, TextBox
 #import cartopy.mpl.ticker as mticker
 import warnings
 from matplotlib import cm
@@ -73,16 +73,53 @@ def create_dashboard(fig):
     fig.clear()
     global buttons 
     buttons = []
+    
+    global info_buttons
+    info_buttons = []
 
     def create_orbit_tab(event=None):
-        global buttons
         fig.clear()
-        gs = fig.add_gridspec(1, 1, top=0.9)
+        gs = fig.add_gridspec(4, 2, top=0.9)
+        
+        global buttons
+        global info_buttons
 
-        # Altitude vs Velocity plot
-        ax = fig.add_subplot(gs[0, 0], projection='3d')
+        def save_epsilon(epsilon_value):
+            global eps
+            eps = epsilon_value
+            print(eps)
+            return 
+            
+        ## Normal 3D orbit plot
+        ax = fig.add_subplot(gs[0:3, 0], projection='3d')
         plot_tools.Orbit3D(states, tvec, ax, args={'Frame':'Synodic'})
 
+        
+        ##eigen value selection stuff
+        gs_info = gs[6].subgridspec(3, 2)
+
+        eig_ax= fig.add_subplot(gs_info[0,0:2])
+        lam1 = 9.5; lam2 = 0.2
+        textstr = '\n'.join((
+                    r'$\lambda_{1}=%.2f$ - Unstable Eigenvector' % (lam1, ),
+                    r'$\lambda_{2}=%.2f$ - Stable Eigenvector' % (lam2, )))
+        eig_ax.text(0.05, 0.9, textstr, transform=eig_ax.transAxes, fontsize=12, verticalalignment='top', linespacing=1.0)
+        eig_ax.set_xticks([])
+        eig_ax.set_yticks([])
+        
+
+        eps_box = TextBox(fig.add_subplot(gs_info[1, 0:2]), "Epsilon", textalignment="center", initial=0.0001, color='0.5')
+        eps_box.on_submit(save_epsilon)
+
+
+        btn1_ax = fig.add_subplot(gs_info[2,0] )
+        btn2_ax = fig.add_subplot(gs_info[2,1] )
+        btn_lam1 = Button(btn1_ax, 'Unstable Manifold', color="#2d2d2d", hovercolor="#4d4d4d")
+        btn_lam1.label.set_color("white")
+        btn_lam2 = Button(btn2_ax, 'Stable Manifold', color="#2d2d2d", hovercolor="#4d4d4d")
+        btn_lam2.label.set_color("white")
+        
+        info_buttons.append([eps_box, btn_lam1, btn_lam2])
 
         # velocity_magnitude = np.sqrt(
         #     df["Velocity X (km/s)"] ** 2
@@ -142,7 +179,7 @@ def create_dashboard(fig):
             #else:
             #    btn.on_clicked(lambda x: create_aero_tab())
             buttons.append(btn)
-
+        
         plt.draw()
         
     create_orbit_tab()
