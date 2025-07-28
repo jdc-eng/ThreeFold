@@ -2,6 +2,10 @@
 '''Thanks Niko, I bow to you.'''
 import constants as c
 import numpy as np
+import dynamics
+from scipy import integrate as integ
+
+
 
 def invertKeplerTimeEquation(M,E0,e):
     """Invert the Kepler Time Equation
@@ -173,6 +177,73 @@ def ECI2Bar(state, t):
     BARstate[0], BARstate[1], BARstate[2] = rBAR
     BARstate[3], BARstate[4], BARstate[5] = vBAR
     return BARstate
+
+
+
+def computeManifold(Sol, samples, epsilon, T_factor, tsteps, args={}):
+    '''Compute the appropriate manifold and return the 2d array of trajectory solutions. 
+    Inputs: solution array, monodromy, stability, num_samples, epsilon, t0, t1, tsteps.  
+    Sol: solution array of tvec, position, velocity, and STMs
+    T_factor: scaling factor applied to final value in tvec. Used for time propogation extent of sampled ICs. Effectively ks number of periodic orbital periods to propogate each sampled state.
+    tsteps: number of integration steps to take. Controls resolution of propogations.
+    '''
+    _args = {'Stability':'Stable'} # Default arg setting
+    settings = {'Stable':{ 'index':1, 'EOMs':dynamics.BackwardEOMs, 'eps_switch':-1}, 
+                'Unstable':{ 'index':0, 'EOMs':dynamics.ForwardEOMs, 'eps_switch':1} }
+    
+    index = settings[args['Stability']]['index']
+    EOMs = settings[args['Stability']]['EOMs']
+    eps_switch = settings[args['Stability']]['eps_switch']
+    
+    # Extract from Sol
+    states = Sol[1:7,:]
+    tvec = Sol[0,:]
+    Monodromy = Sol[7:,-1].reshape(6,6).transpose()  # Monodromy matrix is STM after one orbital period
+
+
+    eigvals, eigvecs = np.linalg.eig(Monodromy)      # Calculate eigen-vectors and values of monodromy matrix
+    
+    ## Collect proper eigens
+    lambdaU = eigvals[index]                           # Get the desired eigenvalue
+    vU = eigvecs[:,index].reshape(6,1)                 # Get the desired eigenvector for eigval of 1.026
+
+
+    ## Get delta vectors for initial conditions of sampled states
+    h = int(np.floor((len(tvec)-1)/samples))         # Orbital state step value. Used to properly sample across periodic orbit
+    pertVecs = np.zeros((6, samples))              # Pre-allocate matrix sized to hold each perturbed initial state vector. Each is 6x1
+
+    i=0
+    for point in np.arange(0,int(h*samples), h):     # at each time from original solved orbit, get the STM, multiply it by vU and scale,
+        STM = Sol[7:,point].reshape(6,6)             # Extract STM at sample point and resize
+        delta = np.matmul(STM,vU)                    # Delta vector is STM*vU at sampled point in orbit
+
+        xU = states[:,point].reshape(6,1) +  epsilon* delta/np.linalg.norm(delta) # Create perturbed initial conditions at sampled point
+        pertVecs[:,i] = xU[:,0]                     # Save perturbed IC state vector to big matrix for convenience
+        # pertVecs[:,i+1] = xUn[:,0]
+        i+=1
+    
+    
+    ## Integrate pert vectors
+    t0 = 0; tf = T_factor*tvec[-1]
+    tspan=np.linspace(t0, tf, tsteps)
+    step = (tf-t0)/tsteps
+    
+    # Pre-create 3D array
+    # states, steps = np.shape(Sol)
+    manifold = np.zeros((samples, 7, tsteps))
+    for point in range(samples): # Loop through each perturbed IC state vector
+        state0 = pertVecs[:,point]
+        # print(state0syn)
+        SynSol = integ.solve_ivp(fun=EOMs, t_span=[t0,tf], t_eval=tspan, y0=state0, method='DOP853', max_step = step, atol=1e-9, rtol=1e-6) # Integrate the IC with the proper time direction EOMs.
+        manifold[point, 0,:] = SynSol.t
+        manifold[point,1:,:] = SynSol.y[0:6,:]
+            
+    
+
+    return manifold
+
+
+
 
 def Tisserand(state,mu):
     ## Convert to regular shit first

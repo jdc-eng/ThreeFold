@@ -1,13 +1,9 @@
 import plot_tools
+import orbit_tools
 import numpy as np
-#import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
-import os
-#import cartopy.crs as ccrs
-#import cartopy.feature as cfeature
 from matplotlib.widgets import Button, TextBox
-#import cartopy.mpl.ticker as mticker
 import warnings
 from matplotlib import cm
 
@@ -17,11 +13,29 @@ sol_dir = os.path.join(os.getcwd(),"OrbitSolutions")
 
 ## Extract state information from loaded solution set
 orbit = 'Halo.csv' # Select orbit solution file
-Sol = np.loadtxt(os.path.join(sol_dir, orbit), delimiter=',')
-states = Sol[1:7,:]
-tvec = Sol[0,:]
-eps = 1*10**(-4)
+global orbit_sol
+orbit_sol = np.loadtxt(os.path.join(sol_dir, orbit), delimiter=',')
+Monodromy = orbit_sol[7:,-1].reshape(6,6).transpose()  # Monodromy matrix is STM after one orbital period
+eigvals, eigvecs = np.linalg.eig(Monodromy)      # Calculate eigen-vectors and values of monodromy matrix
 
+lam1 = eigvals[0]; lam2 = eigvals[1]
+
+#states = Sol[1:7,:]
+#tvec = Sol[0,:]
+
+
+
+## Setup manifold computation settings. Everything that has  text box needs to be set
+# copy from SimPlots.y
+global epsilon, samples, T_factor, tsteps
+samples = 40
+epsilon = 1*10**(-5)
+T_factor = 2
+tsteps = 2000
+
+
+
+## Compute Monodromy atrix and eigen vals and vectors
 
 # Add this near the top of the file, after imports but before any other functions
 def add_gradient_background(ax):
@@ -76,50 +90,164 @@ def create_dashboard(fig):
     
     global info_buttons
     info_buttons = []
-
     def create_orbit_tab(event=None):
         fig.clear()
-        gs = fig.add_gridspec(4, 2, top=0.9)
+        gs = fig.add_gridspec(4, 1, top=0.9)
         
         global buttons
         global info_buttons
+        
+        
 
         def save_epsilon(epsilon_value):
-            global eps
-            eps = epsilon_value
-            print(eps)
-            return 
+            # set man_recompute to False initially?
+            global epsilon
+            print(epsilon)
+            if int(epsilon_value) == epsilon:
+                pass
+            else:
+                epsilon = int(epsilon_value)
+            print(epsilon)
+            return
+
+        def save_samples(samples_value):
+            # set man_recompute to False initially?
+            global samples
+            print(samples)
+            if int(samples_value) == samples:
+                pass
+            else:
+                samples = int(samples_value)
+            print(samples)
+            return
+        
+        def save_tfactor(tfactor_value):
+            # set man_recompute to False initially?
+            global T_factor
+            print(T_factor)
+            if float(tfactor_value) == T_factor:
+                pass
+            else:
+                T_factor = float(tfactor_value)
+            print(T_factor)
+            return
+        
+        def save_tsteps(tsteps_value):
+            # set man_recompute to False initially?
+            global tsteps
+            if int(tsteps_value) == tsteps:
+                pass
+            else:
+                tsteps = int(tsteps_value)
+            print(f'Changes number of timesteps to {tsteps}')
+            return
+
+
+        def plot_stable_manifold(label):
+            '''Inputs: 3d trajectory solutions vector, plot title, eig value'''
             
-        ## Normal 3D orbit plot
-        ax = fig.add_subplot(gs[0:3, 0], projection='3d')
-        plot_tools.Orbit3D(states, tvec, ax, args={'Frame':'Synodic'})
+            # clear subplot
+            orbit_ax.clear()
+            
+            # re-add orbit
+            plot_tools.Orbit3D(orbit_sol, orbit_ax, args={'Frame':'Synodic'})
+            
+            # plot stable manifold
+            plot_tools.PlotManifold(orbit_ax, stable_manifold, line_color="green" )
 
+            return
         
-        ##eigen value selection stuff
-        gs_info = gs[6].subgridspec(3, 2)
+        def plot_unstable_manifold(label):
+            '''Inputs: 3d trajectory solutions vector, plot title, eig value'''
+            
+            # clear subplot
+            orbit_ax.clear()
+            
+            # re-add orbit
+            plot_tools.Orbit3D(orbit_sol, orbit_ax, args={'Frame':'Synodic'})
+            
+            # plot stable manifold
+            plot_tools.PlotManifold(orbit_ax, unstable_manifold, line_color="red" )
 
-        eig_ax= fig.add_subplot(gs_info[0,0:2])
-        lam1 = 9.5; lam2 = 0.2
-        textstr = '\n'.join((
-                    r'$\lambda_{1}=%.2f$ - Unstable Eigenvector' % (lam1, ),
-                    r'$\lambda_{2}=%.2f$ - Stable Eigenvector' % (lam2, )))
-        eig_ax.text(0.05, 0.9, textstr, transform=eig_ax.transAxes, fontsize=12, verticalalignment='top', linespacing=1.0)
-        eig_ax.set_xticks([])
-        eig_ax.set_yticks([])
+            return
+
+        def refresh_manifolds(label):
+            '''Recompute the stable and unstable manifold'''
+            print("Computing manifolds.")
+            global stable_manifold, unstable_manifold
+
+            stable_manifold = orbit_tools.computeManifold(orbit_sol, samples, epsilon, T_factor, tsteps, args={'Stability':'Stable'})
+            unstable_manifold = orbit_tools.computeManifold(orbit_sol, samples, epsilon, T_factor, tsteps, args={'Stability':'Unstable'})
+
+            print("Completed manifold computation.")
+            return
         
 
-        eps_box = TextBox(fig.add_subplot(gs_info[1, 0:2]), "Epsilon", textalignment="center", initial=0.0001, color='0.5')
+        ## Normal 3D orbit plot 
+        orbit_ax = fig.add_subplot(gs[0:3, 0], projection='3d')
+        plot_tools.Orbit3D(orbit_sol, orbit_ax, args={'Frame':'Synodic'})
+
+        # subgrid for the 
+        gs_info = gs[3].subgridspec(5, 2)
+        
+        # first eigen value
+        eig_ax1= fig.add_subplot(gs_info[0,0])
+        textstr1 = r'$\lambda_{1}=%.6f$' % (lam1, )
+        eig_ax1.text(0.05, 0.9, textstr1, transform=eig_ax1.transAxes, fontsize=12, verticalalignment='top', linespacing=1.0)
+        eig_ax1.set_xticks([])
+        eig_ax1.set_yticks([])
+        eig_ax1.set_title('Unstable Eigenvector')
+
+        # second eigen value
+        eig_ax2 = fig.add_subplot(gs_info[0,1])
+        textstr2 = r'$\lambda_{2}=%.6f$' % (lam2, )
+        eig_ax2.text(0.05, 0.9, textstr2, transform=eig_ax2.transAxes, fontsize=12, verticalalignment='top', linespacing=1.0)
+        eig_ax2.set_xticks([])
+        eig_ax2.set_yticks([])
+        eig_ax2.set_title('Stable Eigenvector')
+
+        # epsilon user entry
+        eps_ax = fig.add_subplot(gs_info[1, 0]) 
+        eps_box = TextBox(eps_ax, "Epsilon", textalignment="center", initial=epsilon, color='0.5', hovercolor="#4d4d4d")
         eps_box.on_submit(save_epsilon)
 
-
-        btn1_ax = fig.add_subplot(gs_info[2,0] )
-        btn2_ax = fig.add_subplot(gs_info[2,1] )
-        btn_lam1 = Button(btn1_ax, 'Unstable Manifold', color="#2d2d2d", hovercolor="#4d4d4d")
-        btn_lam1.label.set_color("white")
-        btn_lam2 = Button(btn2_ax, 'Stable Manifold', color="#2d2d2d", hovercolor="#4d4d4d")
-        btn_lam2.label.set_color("white")
+        # samples user entry
+        samples_ax = fig.add_subplot(gs_info[1, 1]) 
+        samples_box = TextBox(samples_ax, "Samples", textalignment="center", initial=samples, color='0.5', hovercolor="#4d4d4d")
+        samples_box.on_submit(save_samples)
         
-        info_buttons.append([eps_box, btn_lam1, btn_lam2])
+        # Tfactor user entry
+        tfactor_ax = fig.add_subplot(gs_info[2, 0]) 
+        tfactor_box = TextBox(tfactor_ax, "T_factor", textalignment="center", initial=T_factor, color='0.5', hovercolor="#4d4d4d")
+        tfactor_box.on_submit(save_tfactor)
+        
+        # tsteps user entry
+        tsteps_ax = fig.add_subplot(gs_info[2, 1]) 
+        tsteps_box = TextBox(tsteps_ax, "tsteps", textalignment="center", initial=tsteps, color='0.5', hovercolor="#4d4d4d")
+        tsteps_box.on_submit(save_tsteps)
+        
+        # recompute manifold button
+        man_compute_ax = fig.add_subplot(gs_info[3,:] )
+        man_compute_btn = Button(man_compute_ax, 'Recompute Manifolds', color="#2d2d2d" , hovercolor="#4d4d4d")
+        man_compute_btn.label.set_color("white")
+        man_compute_btn.on_clicked(refresh_manifolds)
+
+        # manifold plot buttons
+        unstable_btn_ax = fig.add_subplot(gs_info[4,0] )
+        stable_btn_ax = fig.add_subplot(gs_info[4,1] )
+        
+        unstable_btn = Button(unstable_btn_ax, 'Unstable Manifold', color="#2d2d2d", hovercolor="#4d4d4d")
+        unstable_btn.label.set_color("white")
+        unstable_btn.on_clicked(plot_unstable_manifold)
+
+        stable_btn = Button(stable_btn_ax, 'Stable Manifold', color="#2d2d2d" , hovercolor="#4d4d4d")
+        stable_btn.label.set_color("white")
+        stable_btn.on_clicked(plot_stable_manifold)
+        
+        
+        #orbit_ax.axis('equal')
+
+        info_buttons.append([eps_box, samples_box, tfactor_box, tsteps_box, man_compute_btn, unstable_btn, stable_btn])
 
         # velocity_magnitude = np.sqrt(
         #     df["Velocity X (km/s)"] ** 2
@@ -166,14 +294,14 @@ def create_dashboard(fig):
 
         # Clear old buttons and create new ones
         buttons.clear()
-        for i, name in enumerate(["Orbit", "Attitude", "Controls", "Aero"]):
+        for i, name in enumerate(["Orbit", "Phase Plots"]):
             button_ax = fig.add_axes([0.30 + i * 0.12, 0.95, 0.10, 0.03])
             btn = Button(button_ax, name, color="#2d2d2d", hovercolor="#4d4d4d")
             btn.label.set_color("white")
             if name == "Orbit":
                 btn.on_clicked(lambda x: create_orbit_tab())
-            #elif name == "Attitude":
-            #    btn.on_clicked(lambda x: create_attitude_tab())
+            elif name == "Phase Plots":
+                btn.on_clicked(lambda x: create_phase_tab())
             #elif name == "Controls":
             #    btn.on_clicked(lambda x: create_controls_tab())
             #else:
@@ -181,7 +309,44 @@ def create_dashboard(fig):
             buttons.append(btn)
         
         plt.draw()
+    def create_phase_tab():
+        fig.clear()
+        gs = fig.add_gridspec(1, 2, top=0.9)
         
+        global buttons
+        
+        ## global figures
+        phase_plot_ax = fig.add_subplot(gs[:,:])
+        plot_tools.PlotManifold2D(phase_plot_ax, stable_manifold, line_color="green")
+        plot_tools.PlotManifold2D(phase_plot_ax, unstable_manifold, line_color="red")
+
+        
+
+
+
+
+
+
+
+
+
+        buttons.clear()
+        for i, name in enumerate(["Orbit", "Phase Plots"]):
+            button_ax = fig.add_axes([0.30 + i * 0.12, 0.95, 0.10, 0.03])
+            btn = Button(button_ax, name, color="#2d2d2d", hovercolor="#4d4d4d")
+            btn.label.set_color("white")
+            if name == "Orbit":
+                btn.on_clicked(lambda x: create_orbit_tab())
+            elif name == "Phase Plots":
+                btn.on_clicked(lambda x: create_phase_tab())
+            #elif name == "Controls":
+            #    btn.on_clicked(lambda x: create_controls_tab())
+            #else:
+            #    btn.on_clicked(lambda x: create_aero_tab())
+            buttons.append(btn)
+
+        plt.draw()
+        return
     create_orbit_tab()
         # add table or something with the two relevant eigenvectors
         # two buttons on bottom: Plot stable manifold and plot unstable manifold

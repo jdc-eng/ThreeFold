@@ -23,7 +23,8 @@ def SynodicEOMs(t, state):
     statedot[  3] = x + 2*vy - m1* (rb1)/ r1**3 - m2* (rb2)/ r2**3
     statedot[  4] = y - 2*vx - m1*     y/ r1**3 - m2*     y/ r2**3
     statedot[  5] =          - m1*     z/ r1**3 - m2*     z/ r2**3
-
+    
+    # Create STM derivative KoonLoMarRoss2011 pg159
     Uxx = 1 - (1-mu)*(r1**2-3*rb1**2)/r1**5 - mu*(r2**2-3*rb2**2)/r2**5
     Uxy = 3*y*(1-mu)*rb1/r1**5 + 3*mu*y*rb2/r2**5
     Uxz = 3*z*(1-mu)*rb1/r1**5 + 3*mu*z*rb2/r2**5

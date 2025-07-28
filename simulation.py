@@ -3,7 +3,7 @@ import constants as c
 import orbit_tools as ot
 import plot_tools as pt
 import dynamics as cr3bp
-from scipy import integrate as int
+from scipy import integrate as integ
 import numpy as np
 import matplotlib.pyplot as plt
 import state_library as slib
@@ -32,7 +32,7 @@ print(state0)
 
 
 ## Integrate initial state with a certian integrator and dynamics model/reference frame
-SynSol = int.solve_ivp(fun=cr3bp.SynodicEOMs, t_span=[t0,tbound], y0=state0, method='DOP853', max_step = step, atol=1e-12, rtol=1e-9)
+SynSol = integ.solve_ivp(fun=cr3bp.SynodicEOMs, t_span=[t0,tbound], y0=state0, method='DOP853', max_step = step, atol=1e-12, rtol=1e-9)
 # sailSol = int.solve_ivp(fun=cr3bp.SailSynodicEOMs, t_span=[t0,tbound], y0=state0, method='DOP853', max_step = step, atol=1e-9, rtol=1e-6) 
 
 

@@ -79,10 +79,57 @@ def PhasePortraits(solvec, tvec):
     plt.ylabel('Xdot')
     plt.colorbar(traj2)
     
+def Orbit2D(solvec, time, mu, args={}):
+    _args = {'Frame':'Synodic'}
+    x = np.array(solvec[0,:])
+    y = np.array(solvec[1,:])
+    z = np.array(solvec[2,:])
+
+    fig = plt.figure()
+    ax = plt.axes()
+    traj = ax.scatter(x,y, c=time, cmap = 'plasma', s=.5, label='Spacecraft')
+    ax.plot(-mu, 0, c='g', marker='x', label='Earth')
+    ax.plot(1-mu, 0, c='b', marker='^', label='Moon')
+    ax.plot(0,0, c='m', marker='*')
 
 
-def Orbit3D(solvec, time, ax, args={}):
+    # if args['Frame'] == 'Barycentric':
+    #     n = np.linspace(0,2*np.pi,100)
+    #     v = np.linspace(0, np.pi, 100)
+
+    #     re = c.earthD / c.lstar
+    #     rm = c.moonD / c.lstar
+
+    #     EarthX = -mu*np.cos(n)
+    #     EarthY = -mu*np.sin(n)
+    #     MoonX = (1-mu)*np.cos(n)
+    #     MoonY = (1-mu)*np.sin(n)
+
+    #     xe = re * np.outer(np.cos(n), np.sin(v)) + mu
+    #     ye = re * np.outer(np.sin(n), np.sin(v)) + 0
+
+    #     xm = rm * np.outer(np.cos(n), np.sin(v)) - (1-mu)
+    #     ym = rm * np.outer(np.sin(n), np.sin(v))
+
+    #     ax.scatter(EarthX, EarthY, c='g')
+    #     ax.scatter(MoonX, MoonY, c='b')
+    #     ax.scatter(xe,ye)
+    #     ax.scatter(xm,ym, c=time, cmap = 'plasma', label='Moon Orbit')
+
+    plt.axis('equal')
+    ax.legend()
+    ax.set_xlim(-1,1)
+    plt.xlabel('X')
+    plt.ylabel('Y')
+    # plt.colorbar(traj)
+
+
+def Orbit3D(orbit_solution, ax, args={}):
     _args = {'Frame': 'Synodic'}
+
+    time = orbit_solution[0,:]
+    solvec = orbit_solution[1:7,:]
+
     x = np.array(solvec[0,:])
     y = np.array(solvec[1,:])
     z = np.array(solvec[2,:])
@@ -144,42 +191,89 @@ def Orbit3D(solvec, time, ax, args={}):
     # plt.colorbar(traj)
 
 
-def PlotManifold(solvec, time, mu, ax, title,eigval, eigvec):
+def PlotManifold(ax, manifold, line_color ):
+    '''Inputs: manifold (contains solvec, time)'''
     # _args = {'Frame': 'Synodic'}
-    x_vals = np.array(solvec[0,:])
-    y_vals = np.array(solvec[1,:])
-    z_vals = np.array(solvec[2,:])
+    
+
+    for trajectory in manifold:
+        # extract trajectory
+        x_vals = np.array(trajectory[1,:])
+        y_vals = np.array(trajectory[2,:])
+        z_vals = np.array(trajectory[3,:])
+        
+        # add to plot
+        traj = ax.plot(x_vals,y_vals,z_vals, color=line_color)
+    ax.axis('equal')
+    # ax.set_title(title) 
+    # ax = plt.axes(projection='3d')
+    
+    # traj = ax.scatter(x_vals,y_vals,z_vals, c=time, cmap = 'plasma',s=.5)
+
+    #ax.scatter(0,0,0, c='m', marker='*')
 
     
-    # ax = plt.axes(projection='3d')
-    traj = ax.scatter(x_vals,y_vals,z_vals, c=time, cmap = 'plasma',s=.5)
-    ax.scatter(0,0,0, c='m', marker='*')
+    # plt.suptitle(title)
 
-    n = np.linspace(0,2*np.pi,100)
-    v = np.linspace(0, np.pi, 100)
-
-    re = c.earthD / c.lstar
-    rm = c.moonD / c.lstar
-
-    xe = re * np.outer(np.cos(n), np.sin(v)) - mu
-    ye = re * np.outer(np.sin(n), np.sin(v)) + 0
-    ze = re * np.outer(np.ones(np.size(n)), np.cos(v)) + 0
-
-    xm = rm * np.outer(np.cos(n), np.sin(v)) + (1-mu)
-    ym = rm * np.outer(np.sin(n), np.sin(v))
-    zm = rm * np.outer(np.ones(np.size(n)), np.cos(v))
-
-    ax.plot_surface(xe,ye,ze)
-    ax.plot_surface(xm,ym,zm)
-    plt.suptitle(title)
-
-    ax.set_title(("Eigenvalue: ", eigval ))
-    plt.axis('equal')
+    # plt.axis('equal')
     # ax.text2D(0.05, 0.95, (r'Eigenvalue: ', eigval, r'\nEigvec: ', eigvec), transform=ax.transAxes)
-    ax.legend()
-    plt.xlabel('X\n')
-    plt.ylabel('Y\n')
+    # ax.legend()
+    # plt.xlabel('X\n')
+    # plt.ylabel('Y\n')
     # plt.colorbar(traj)
+
+
+def PlotManifold2D(ax, manifold, line_color):
+    for trajectory in manifold:
+        # extract trajectory
+        x_vals = np.array(trajectory[1,:])
+        y_vals = np.array(trajectory[2,:])
+        #z_vals = np.array(trajectory[3,:])
+        
+        # add to plot
+        traj = ax.plot(x_vals,y_vals, color=line_color)
+    ax.axis('equal')
+
+
+
+
+
+# def PlotManifold(solvec, time, mu, ax, title,eigval, eigvec):
+#     # _args = {'Frame': 'Synodic'}
+#     x_vals = np.array(solvec[0,:])
+#     y_vals = np.array(solvec[1,:])
+#     z_vals = np.array(solvec[2,:])
+# 
+#     
+#     # ax = plt.axes(projection='3d')
+#     traj = ax.scatter(x_vals,y_vals,z_vals, c=time, cmap = 'plasma',s=.5)
+#     ax.scatter(0,0,0, c='m', marker='*')
+# 
+#     n = np.linspace(0,2*np.pi,100)
+#     v = np.linspace(0, np.pi, 100)
+# 
+#     re = c.earthD / c.lstar
+#     rm = c.moonD / c.lstar
+# 
+#     xe = re * np.outer(np.cos(n), np.sin(v)) - mu
+#     ye = re * np.outer(np.sin(n), np.sin(v)) + 0
+#     ze = re * np.outer(np.ones(np.size(n)), np.cos(v)) + 0
+# 
+#     xm = rm * np.outer(np.cos(n), np.sin(v)) + (1-mu)
+#     ym = rm * np.outer(np.sin(n), np.sin(v))
+#     zm = rm * np.outer(np.ones(np.size(n)), np.cos(v))
+# 
+#     ax.plot_surface(xe,ye,ze)
+#     ax.plot_surface(xm,ym,zm)
+#     plt.suptitle(title)
+# 
+#     ax.set_title(("Eigenvalue: ", eigval ))
+#     plt.axis('equal')
+#     # ax.text2D(0.05, 0.95, (r'Eigenvalue: ', eigval, r'\nEigvec: ', eigvec), transform=ax.transAxes)
+#     ax.legend()
+#     plt.xlabel('X\n')
+#     plt.ylabel('Y\n')
+#     # plt.colorbar(traj)
 
 
 def Orbit2D(solvec, time, mu, args={}):
