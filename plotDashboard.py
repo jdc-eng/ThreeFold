@@ -103,10 +103,10 @@ def create_dashboard(fig):
             # set man_recompute to False initially?
             global epsilon
             print(epsilon)
-            if int(epsilon_value) == epsilon:
+            if float(epsilon_value) == epsilon:
                 pass
             else:
-                epsilon = int(epsilon_value)
+                epsilon = float(epsilon_value)
             print(epsilon)
             return
 
