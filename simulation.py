@@ -12,23 +12,24 @@ np.set_printoptions(linewidth=175)
 import os
 
 
-## Setup timestep of propagation
-t0 = 0                              # Initial tTime
-tbound =  2.7764143751594395        # Final time
-tsteps = 6000
-step = (tbound-t0)/tsteps
 
 ## Create initial state vector
 STM0 = np.eye(6,6).reshape(1,36)[0]                  # Initial STM is identity matrix
 
 # Iniial position and velocity vector states
-x0 = np.array(slib.StateDict('Halo'))             # Select from library
-# x0 = np.array([[ 0, 0, 0, 0, 0, 0 ]])           # Manually set initial states
-print(x0)
-print(STM0)
-state0 = np.concatenate((x0, STM0), axis=0)       # Concatenate initial position, velocity, and STM vectors into one
-print(state0)
+orbit = slib.StateDict('L1-Halo')
 
+x0 = np.array(orbit['state0'])             # Select from library
+# x0 = np.array([[ 0, 0, 0, 0, 0, 0 ]])           # Manually set initial states
+print(f"Initial state vector: {x0}.")
+state0 = np.concatenate((x0, STM0), axis=0)       # Concatenate initial position, velocity, and STM vectors into one
+
+
+## Setup timestep of propagation
+t0 = 0                              # Initial Time
+tbound = orbit['Period']            # Final time
+tsteps = 6000
+step = (tbound-t0)/tsteps
 
 
 ## Integrate initial state with a certian integrator and dynamics model/reference frame
@@ -36,19 +37,27 @@ SynSol = integ.solve_ivp(fun=cr3bp.SynodicEOMs, t_span=[t0,tbound], y0=state0, m
 # sailSol = int.solve_ivp(fun=cr3bp.SailSynodicEOMs, t_span=[t0,tbound], y0=state0, method='DOP853', max_step = step, atol=1e-9, rtol=1e-6) 
 
 
+statef = SynSol.y[0:6,-1]
+state_diff = x0-statef
+diff_l2 = np.linalg.norm(state_diff)
+
+print(f"L2-norm of monodromy state vector: {diff_l2}.")
+
 Mono = SynSol.y[6:,-1].reshape(6,6)
-print(Mono)
+
+eigvals, eigvecs = np.linalg.eig(Mono)
+print(f"Eigvalues: {eigvals}.")
 
 
 ## Save to CSV file
 output = np.concatenate((np.asmatrix(SynSol.t),SynSol.y), axis=0)
 
 sol_dir = os.path.join(os.getcwd(),"OrbitSolutions")
-np.savetxt(os.path.join(sol_dir,"Halo.csv"), output, delimiter=",")
+np.savetxt(os.path.join(sol_dir,"L1-Halo.csv"), output, delimiter=",")
 
 
 ## Plotting
-fig = plt.figure()
-ax = fig.add_subplot(1,1,1,projection='3d')
-pt.Orbit3D(SynSol.y, SynSol.t, ax, args={'Frame':'Synodic'})   # plot 3d orbit in synodic frame
-plt.show()
+#fig = plt.figure()
+#ax = fig.add_subplot(1,1,1,projection='3d')
+#pt.Orbit3D(SynSol.y, SynSol.t, ax, args={'Frame':'Synodic'})   # plot 3d orbit in synodic frame
+#plt.show()

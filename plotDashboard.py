@@ -12,7 +12,7 @@ import os
 sol_dir = os.path.join(os.getcwd(),"OrbitSolutions")
 
 ## Extract state information from loaded solution set
-orbit = 'Halo.csv' # Select orbit solution file
+orbit = 'L1-Lyapunov.csv' # Select orbit solution file
 global orbit_sol
 orbit_sol = np.loadtxt(os.path.join(sol_dir, orbit), delimiter=',')
 Monodromy = orbit_sol[7:,-1].reshape(6,6).transpose()  # Monodromy matrix is STM after one orbital period
@@ -30,7 +30,7 @@ lam1 = eigvals[0]; lam2 = eigvals[1]
 global epsilon, samples, T_factor, tsteps
 samples = 40
 epsilon = 1*10**(-5)
-T_factor = 2
+T_factor = 1.5
 tsteps = 2000
 
 
@@ -246,51 +246,11 @@ def create_dashboard(fig):
         
         
         #orbit_ax.axis('equal')
-
+        
+        # Reset the buttons
+        info_buttons.clear()
         info_buttons.append([eps_box, samples_box, tfactor_box, tsteps_box, man_compute_btn, unstable_btn, stable_btn])
 
-        # velocity_magnitude = np.sqrt(
-        #     df["Velocity X (km/s)"] ** 2
-        #     + df["Velocity Y (km/s)"] ** 2
-        #     + df["Velocity Z (km/s)"] ** 2
-        # )
-
-        ## Create scatter plot with time-based coloring
-        # velo_scatter = ax.scatter(
-        #     velocity_magnitude,
-        #     df["Altitude (km)"],
-        #     c=df["Time (s)"],
-        #     cmap="plasma",
-        #     alpha=0.6,
-        #     label="Velocity",
-        # )
-
-        # ax2=ax.twiny()
-        # drag_plot = ax2.plot(
-        #     df["Drag Force (N)"],
-        #     df["Altitude (km)"],
-        #     # c=df["Time (s)"],
-        #     # cmap="plasma",
-        #     # alpha=0.6,
-        #     label="Drag Force",
-        # )
-        # # Add colorbar
-        # cbar = plt.colorbar(velo_scatter)
-        # cbar.set_label("Mission Elapsed Time [hours]")
-        # cbar.ax.yaxis.set_major_formatter(
-        #     plt.FuncFormatter(lambda x, p: f"{x / 3600:.1f}")
-        # )
-
-        # ax.set_xlabel("Velocity Magnitude [km/s]")
-        # ax.set_ylabel("Altitude [km]")
-        # ax2.set_xlabel("Drag Force [N]")
-        # ax.set_title("Altitude vs Velocity (bot) and Drag ")
-        # ax.grid(True)
-
-        # lines, labels = ax.get_legend_handles_labels()
-        # lines2, labels2 = ax2.get_legend_handles_labels()
-        # ax2.legend(lines + lines2, labels + labels2, loc=0)
-        # ax2.legend(loc="upper right")
 
         # Clear old buttons and create new ones
         buttons.clear()
@@ -309,6 +269,8 @@ def create_dashboard(fig):
             buttons.append(btn)
         
         plt.draw()
+    
+
     def create_phase_tab():
         fig.clear()
         gs = fig.add_gridspec(1, 2, top=0.9)
@@ -321,15 +283,6 @@ def create_dashboard(fig):
         plot_tools.PlotManifold2D(phase_plot_ax, unstable_manifold, line_color="red")
 
         
-
-
-
-
-
-
-
-
-
         buttons.clear()
         for i, name in enumerate(["Orbit", "Phase Plots"]):
             button_ax = fig.add_axes([0.30 + i * 0.12, 0.95, 0.10, 0.03])
