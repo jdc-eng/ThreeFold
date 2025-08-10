@@ -92,12 +92,11 @@ def create_dashboard(fig):
     info_buttons = []
     def create_orbit_tab(event=None):
         fig.clear()
-        gs = fig.add_gridspec(4, 1, top=0.9)
         
         global buttons
         global info_buttons
         
-        
+        info_buttons.clear()
 
         def save_epsilon(epsilon_value):
             # set man_recompute to False initially?
@@ -180,15 +179,26 @@ def create_dashboard(fig):
             unstable_manifold = orbit_tools.computeManifold(orbit_sol, samples, epsilon, T_factor, tsteps, args={'Stability':'Unstable'})
 
             print("Completed manifold computation.")
+            
+            
+            plot_tools.PlotManifold2D(twod_plot, stable_manifold, line_color="green")
+            plot_tools.PlotManifold2D(twod_plot, unstable_manifold, line_color="red")
+            
             return
         
 
-        ## Normal 3D orbit plot 
+        gs = fig.add_gridspec(4, 2, top=0.9)
+        
+        ## Normal 3D orbit plot
+        
         orbit_ax = fig.add_subplot(gs[0:3, 0], projection='3d')
         plot_tools.Orbit3D(orbit_sol, orbit_ax, args={'Frame':'Synodic'})
 
-        # subgrid for the 
-        gs_info = gs[3].subgridspec(5, 2)
+        twod_plot = fig.add_subplot(gs[0:3, 1])
+        twod_plot.set(xlim=(0.75,1.25))
+
+        # subgrid for the buttons
+        gs_info = gs[6].subgridspec(5, 2)
         
         # first eigen value
         eig_ax1= fig.add_subplot(gs_info[0,0])
@@ -278,9 +288,6 @@ def create_dashboard(fig):
         global buttons
         
         ## global figures
-        phase_plot_ax = fig.add_subplot(gs[:,:])
-        plot_tools.PlotManifold2D(phase_plot_ax, stable_manifold, line_color="green")
-        plot_tools.PlotManifold2D(phase_plot_ax, unstable_manifold, line_color="red")
 
         
         buttons.clear()

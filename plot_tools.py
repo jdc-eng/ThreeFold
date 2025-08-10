@@ -225,6 +225,9 @@ def PlotManifold2D(ax, manifold, line_color):
         
         # add to plot
         traj = ax.plot(x_vals,y_vals, color=line_color)
+    
+    ax.plot(1-c.mustar, 0, color='pink')
+    ax.set(xlim=(0.75,1.25))
     ax.axis('equal')
 
 
