@@ -13,8 +13,8 @@ moonMass = .07346 * 10 ** 24
 moonD = 3474.8 * 10 ** 3
 
 # Earth-Moon System Values
-mustar = moonMass/(moonMass + earthMass)
-lstar = 3.844 * 10 ** 8
+mustar = .01215058560962404 #  moonMass/(moonMass + earthMass)
+lstar =  3.89703 * 10 ** 8  # 3.844 * 10 ** 8
 tstar = 382981
 EMmu = G*(earthMass+moonMass)
 
