@@ -79,18 +79,17 @@ def PhasePortraits(solvec, tvec):
     plt.ylabel('Xdot')
     plt.colorbar(traj2)
     
-def Orbit2D(solvec, time, mu, args={}):
-    _args = {'Frame':'Synodic'}
-    x = np.array(solvec[0,:])
-    y = np.array(solvec[1,:])
-    z = np.array(solvec[2,:])
+def Orbit2D(ax, orbit_solution):
+    mu = c.mustar
 
-    fig = plt.figure()
-    ax = plt.axes()
-    traj = ax.scatter(x,y, c=time, cmap = 'plasma', s=.5, label='Spacecraft')
+    x = np.array(orbit_solution[1,:])
+    y = np.array(orbit_solution[2,:])
+    z = np.array(orbit_solution[3,:])
+
+
+    traj = ax.plot(x,y, label='Orbit')
     ax.plot(-mu, 0, c='g', marker='x', label='Earth')
-    ax.plot(1-mu, 0, c='b', marker='^', label='Moon')
-    ax.plot(0,0, c='m', marker='*')
+    ax.plot(1-mu, 0, c='pink', marker='^', label='Moon')
 
 
     # if args['Frame'] == 'Barycentric':
@@ -118,7 +117,7 @@ def Orbit2D(solvec, time, mu, args={}):
 
     plt.axis('equal')
     ax.legend()
-    ax.set_xlim(-1,1)
+    ax.set_xlim(-0.25,1.25)
     plt.xlabel('X')
     plt.ylabel('Y')
     # plt.colorbar(traj)
@@ -225,56 +224,11 @@ def PlotManifold2D(ax, manifold, line_color):
         
         # add to plot
         traj = ax.plot(x_vals,y_vals, color=line_color)
+        ax.plot(x_vals[0],y_vals[0], c='cyan')
     
     ax.plot(1-c.mustar, 0, color='pink')
     ax.set(xlim=(0.75,1.25))
     ax.axis('equal')
-
-
-
-def Orbit2D(solvec, time, mu, args={}):
-    _args = {'Frame':'Synodic'}
-    x = np.array(solvec[0,:])
-    y = np.array(solvec[1,:])
-    z = np.array(solvec[2,:])
-
-    fig = plt.figure()
-    ax = plt.axes()
-    traj = ax.scatter(x,y, c=time, cmap = 'plasma', s=.5, label='Spacecraft')
-    ax.plot(-mu, 0, c='g', marker='x', label='Earth')
-    ax.plot(1-mu, 0, c='b', marker='^', label='Moon')
-    ax.plot(0,0, c='m', marker='*')
-
-
-    # if args['Frame'] == 'Barycentric':
-    #     n = np.linspace(0,2*np.pi,100)
-    #     v = np.linspace(0, np.pi, 100)
-
-    #     re = c.earthD / c.lstar
-    #     rm = c.moonD / c.lstar
-
-    #     EarthX = -mu*np.cos(n)
-    #     EarthY = -mu*np.sin(n)
-    #     MoonX = (1-mu)*np.cos(n)
-    #     MoonY = (1-mu)*np.sin(n)
-
-    #     xe = re * np.outer(np.cos(n), np.sin(v)) + mu
-    #     ye = re * np.outer(np.sin(n), np.sin(v)) + 0
-
-    #     xm = rm * np.outer(np.cos(n), np.sin(v)) - (1-mu)
-    #     ym = rm * np.outer(np.sin(n), np.sin(v))
-
-    #     ax.scatter(EarthX, EarthY, c='g')
-    #     ax.scatter(MoonX, MoonY, c='b')
-    #     ax.scatter(xe,ye)
-    #     ax.scatter(xm,ym, c=time, cmap = 'plasma', label='Moon Orbit')
-
-    plt.axis('equal')
-    ax.legend()
-    ax.set_xlim(-1,1)
-    plt.xlabel('X')
-    plt.ylabel('Y')
-    # plt.colorbar(traj)
 
 
 def JacobiPlot(C, time, ybound ):

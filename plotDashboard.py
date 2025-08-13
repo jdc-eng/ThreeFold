@@ -12,7 +12,7 @@ import os
 sol_dir = os.path.join(os.getcwd(),"OrbitSolutions")
 
 ## Extract state information from loaded solution set
-orbit = 'L1-Lyapunov.csv' # Select orbit solution file
+orbit = 'L1-Halo.csv' # Select orbit solution file
 global orbit_sol
 orbit_sol = np.loadtxt(os.path.join(sol_dir, orbit), delimiter=',')
 Monodromy = orbit_sol[7:,-1].reshape(6,6).transpose()  # Monodromy matrix is STM after one orbital period
@@ -148,12 +148,12 @@ def create_dashboard(fig):
             # clear subplot
             orbit_ax.clear()
             
+            # plot stable manifold
+            plot_tools.PlotManifold(orbit_ax, stable_manifold, line_color="green" )
+            
             # re-add orbit
             plot_tools.Orbit3D(orbit_sol, orbit_ax, args={'Frame':'Synodic'})
             
-            # plot stable manifold
-            plot_tools.PlotManifold(orbit_ax, stable_manifold, line_color="green" )
-
             return
         
         def plot_unstable_manifold(label):
@@ -162,12 +162,12 @@ def create_dashboard(fig):
             # clear subplot
             orbit_ax.clear()
             
-            # re-add orbit
-            plot_tools.Orbit3D(orbit_sol, orbit_ax, args={'Frame':'Synodic'})
-            
             # plot stable manifold
             plot_tools.PlotManifold(orbit_ax, unstable_manifold, line_color="red" )
 
+            # re-add orbit
+            plot_tools.Orbit3D(orbit_sol, orbit_ax, args={'Frame':'Synodic'})
+            
             return
 
         def refresh_manifolds(label):
@@ -180,10 +180,11 @@ def create_dashboard(fig):
 
             print("Completed manifold computation.")
             
-            
+            twod_plot.clear()
             plot_tools.PlotManifold2D(twod_plot, stable_manifold, line_color="green")
             plot_tools.PlotManifold2D(twod_plot, unstable_manifold, line_color="red")
             
+            plot_tools.Orbit2D(twod_plot, orbit_sol)
             return
         
 
@@ -195,7 +196,8 @@ def create_dashboard(fig):
         plot_tools.Orbit3D(orbit_sol, orbit_ax, args={'Frame':'Synodic'})
 
         twod_plot = fig.add_subplot(gs[0:3, 1])
-        twod_plot.set(xlim=(0.75,1.25))
+        plot_tools.Orbit2D(twod_plot, orbit_sol)
+        # twod_plot.set(xlim=(0.75,1.25))
 
         # subgrid for the buttons
         gs_info = gs[6].subgridspec(5, 2)
@@ -263,20 +265,20 @@ def create_dashboard(fig):
 
 
         # Clear old buttons and create new ones
-        buttons.clear()
-        for i, name in enumerate(["Orbit", "Phase Plots"]):
-            button_ax = fig.add_axes([0.30 + i * 0.12, 0.95, 0.10, 0.03])
-            btn = Button(button_ax, name, color="#2d2d2d", hovercolor="#4d4d4d")
-            btn.label.set_color("white")
-            if name == "Orbit":
-                btn.on_clicked(lambda x: create_orbit_tab())
-            elif name == "Phase Plots":
-                btn.on_clicked(lambda x: create_phase_tab())
-            #elif name == "Controls":
-            #    btn.on_clicked(lambda x: create_controls_tab())
-            #else:
-            #    btn.on_clicked(lambda x: create_aero_tab())
-            buttons.append(btn)
+        # buttons.clear()
+        # for i, name in enumerate(["Orbit", "Phase Plots"]):
+        #     button_ax = fig.add_axes([0.30 + i * 0.12, 0.95, 0.10, 0.03])
+        #     btn = Button(button_ax, name, color="#2d2d2d", hovercolor="#4d4d4d")
+        #     btn.label.set_color("white")
+        #     if name == "Orbit":
+        #         btn.on_clicked(lambda x: create_orbit_tab())
+        #     elif name == "Phase Plots":
+        #         btn.on_clicked(lambda x: create_phase_tab())
+        #     #elif name == "Controls":
+        #     #    btn.on_clicked(lambda x: create_controls_tab())
+        #     #else:
+        #     #    btn.on_clicked(lambda x: create_aero_tab())
+        #     buttons.append(btn)
         
         plt.draw()
     
