@@ -206,7 +206,7 @@ def computeManifold(Sol, samples, epsilon, T_factor, tsteps, args={}):
     ## Collect proper eigens
     lambdaU = eigvals[index]                           # Get the desired eigenvalue
     vU = eigvecs[:,index].reshape(6,1)                 # Get the desired eigenvector for eigval of 1.026
-
+    vU = vU/np.linalg.norm(vU)
 
     ## Get delta vectors for initial conditions of sampled states
     h = int(np.floor((len(tvec)-1)/samples))         # Orbital state step value. Used to properly sample across periodic orbit

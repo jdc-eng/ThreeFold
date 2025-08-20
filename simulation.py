@@ -17,7 +17,8 @@ import os
 STM0 = np.eye(6,6).reshape(1,36)[0]                  # Initial STM is identity matrix
 
 # Iniial position and velocity vector states
-orbit = slib.StateDict('L1-Halo')
+name = 'L1-Lyapunov'
+orbit = slib.StateDict(name)
 
 x0 = np.array(orbit['state0'])             # Select from library
 # x0 = np.array([[ 0, 0, 0, 0, 0, 0 ]])           # Manually set initial states
@@ -53,8 +54,8 @@ print(f"Eigvalues: {eigvals}.")
 output = np.concatenate((np.asmatrix(SynSol.t),SynSol.y), axis=0)
 
 sol_dir = os.path.join(os.getcwd(),"OrbitSolutions")
-np.savetxt(os.path.join(sol_dir,"L1-Halo.csv"), output, delimiter=",")
-
+np.savetxt(os.path.join(sol_dir,f"{name}.csv"), output, delimiter=",")
+print(f"Orbit solution written to OrbitSolutions/{name}.csv")
 
 ## Plotting
 #fig = plt.figure()
