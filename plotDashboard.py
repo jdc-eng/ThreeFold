@@ -12,7 +12,7 @@ import os
 sol_dir = os.path.join(os.getcwd(),"OrbitSolutions")
 
 ## Extract state information from loaded solution set
-orbit = 'L1-Halo.csv' # Select orbit solution file
+orbit = 'L1-Lyapunov.csv' # Select orbit solution file
 global orbit_sol
 orbit_sol = np.loadtxt(os.path.join(sol_dir, orbit), delimiter=',')
 Monodromy = orbit_sol[7:,-1].reshape(6,6).transpose()  # Monodromy matrix is STM after one orbital period
@@ -29,7 +29,7 @@ lam1 = eigvals[0]; lam2 = eigvals[1]
 # copy from SimPlots.y
 global epsilon, samples, T_factor, tsteps
 samples = 40
-epsilon = 1*10**(-5)
+epsilon = 1*10**(-6)
 T_factor = 1.5
 tsteps = 2000
 
