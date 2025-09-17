@@ -1,0 +1,7 @@
+[package]
+name = "ThreeFold"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+nalgebra = { version = "0.34", features = [ "serde-serialize" ]}
