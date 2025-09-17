@@ -1,5 +1,5 @@
-use nalgebra::{DMatrix, RowDVector, Vector6, MatrixXx6, OVector};
-// use nalgebra::base::dimension::{Const, Dyn};
+use nalgebra::{DMatrix, RowDVector, Vector6, Matrix, MatrixXx6, OVector};
+use nalgebra::base::dimension::{Const, Dyn};
 // use nalgebra::Matrix1x6;
 mod dynamics;
 mod trajectory;
@@ -26,21 +26,29 @@ fn main() {
 
     println!("Hello, world!");
     let vec = vec![8.2574814261319895E-1, 2.8339816127588502E-28, 7.9884023525316067E-2, -9.3900450555366247E-16, 1.9356640516861148E-1, -9.8582632717838736E-15];
-    let mut state = MatrixXx6::from_vec(vec);
+    let mut state = Matrix::from_vec_generic(Dyn(6), Const::<1>, vec);
     // let state = Matrix3::new(0, 1, 2, 
     //                     3, 4, 5, 
     //                     6, 7, 8);
-    let delta = Vector6::from_vec(vec![1e-6, 0.0, 0.0, 0.0, 0.0, 0.0]);
+    let delta = Vector6::from_vec(vec![1.0, 2.0, 0.0, 0.0, 0.0, 0.0]);
     
     println!("Initial State: {}", &state);
     
-    let new_state = &state.push(2.0);
+    // &delta.into_iter().for_each(|d| &state.push(*d));
+    for d in delta.iter() {
+        println!("Current delta value: {}", d);
+        &state.push(*d);
+    }
 
+    // &state.push(delta.into_iter().collect());
+    // &delta.into_iter().for_each(|d| println!("Current state value: {}", d));
     // Print out the modified state
-
+    
     // println!("Delta: {}", &delta);
-    println!("Modified State: {}", &new_state);
+    println!("Modified State: {}", &state);
 
+    // let vec_iter = &vec.iter();
 
+    // println!("{}", &vec_iter.next());
 
 }
