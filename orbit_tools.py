@@ -24,7 +24,7 @@ def invertKeplerTimeEquation(M,E0,e):
 def kepler2rv(a,e,Omega,I,omega,tmtp,mu):
     """ Convert Keplerian Elements to a position and velocity.
     INPUTS:
-        a - semjax 
+        a - semjax
         e - eccentricity
         Omega - longitude of ascending node
         I - inclination
@@ -56,7 +56,7 @@ def rv2kepler(r,v,mu):
         v - inertial velocity vector
         mu - gravitational parameter (units of this dictate units of output)
     OUTPUTS:
-        a - semjax 
+        a - semjax
         e - eccentricity
         I - Inclination
     """
@@ -125,11 +125,11 @@ def Bar2Syn(barstate, t):
     At = np.matrix([[np.cos(t), -np.sin(t), 0],
                     [np.sin(t),  np.cos(t), 0],
                     [        0,          0, 1]])
-    
+
     J = np.matrix([[0,  1, 0],
                    [-1, 0, 0],
                    [0,  0, 0]])
-    
+
     rEMR = np.matmul( np.transpose(At), rBAR )
     vEMR = np.matmul( np.transpose(At), ( vBAR + np.matmul( At, np.matmul( J, rEMR )) ) )
 
@@ -149,14 +149,14 @@ def Bar2ECI(state, t):
     At = np.matrix([[np.cos(t), -np.sin(t), 0],
                     [np.sin(t),  np.cos(t), 0],
                     [        0,          0, 1]])
-    
+
     rECI = rBAR + np.matmul( At, rE )
     vECI = vBAR + np.matmul( At, vE )
 
     ECIstate = np.zeros(len(state))
     ECIstate[0], ECIstate[1], ECIstate[2] = rECI
     ECIstate[3], ECIstate[4], ECIstate[5] = vECI
-    return ECIstate 
+    return ECIstate
 
 def ECI2Bar(state, t):
     mu = c.mustar
@@ -169,7 +169,7 @@ def ECI2Bar(state, t):
     At = np.matrix([[np.cos(t), -np.sin(t), 0],
                     [np.sin(t),  np.cos(t), 0],
                     [        0,          0, 1]])
-    
+
     rBAR = rECI - np.matmul( At, rE )
     vBAR = vECI - np.matmul( At, vE )
 
@@ -181,28 +181,31 @@ def ECI2Bar(state, t):
 
 
 def computeManifold(Sol, samples, epsilon, T_factor, tsteps, args={}):
-    '''Compute the appropriate manifold and return the 2d array of trajectory solutions. 
-    Inputs: solution array, monodromy, stability, num_samples, epsilon, t0, t1, tsteps.  
+    '''Compute the appropriate manifold and return the 2d array of trajectory solutions.
+    Inputs: solution array, monodromy, stability, num_samples, epsilon, t0, t1, tsteps.
     Sol: solution array of tvec, position, velocity, and STMs
     T_factor: scaling factor applied to final value in tvec. Used for time propogation extent of sampled ICs. Effectively ks number of periodic orbital periods to propogate each sampled state.
     tsteps: number of integration steps to take. Controls resolution of propogations.
     '''
     _args = {'Stability':'Stable'} # Default arg setting
-    settings = {'Stable':{ 'index':1, 'EOMs':dynamics.BackwardEOMs, 'eps_switch':-1}, 
+    settings = {'Stable':{ 'index':1, 'EOMs':dynamics.BackwardEOMs, 'eps_switch':1},
                 'Unstable':{ 'index':0, 'EOMs':dynamics.ForwardEOMs, 'eps_switch':1} }
-    
+
     index = settings[args['Stability']]['index']
     EOMs = settings[args['Stability']]['EOMs']
     eps_switch = settings[args['Stability']]['eps_switch']
-    
+
     # Extract from Sol
     states = Sol[1:7,:]
     tvec = Sol[0,:]
-    Monodromy = Sol[7:,-1].reshape(6,6).transpose()  # Monodromy matrix is STM after one orbital period
+    Monodromy = Sol[7:,-1].reshape(6,6)  # Monodromy matrix is STM after one orbital period
 
+#    print(f"Monodromy from computeManifold: {Monodromy}\n")
 
     eigvals, eigvecs = np.linalg.eig(Monodromy)      # Calculate eigen-vectors and values of monodromy matrix
-    
+#    print(f"Eigenvalues from computeManifold: {eigvals}\n")
+#    print(f"Eigenvectors from computeManifold: {eigvecs[:,1]}\n")
+
     ## Collect proper eigens
     lambdaU = eigvals[index]                           # Get the desired eigenvalue
     vU = eigvecs[:,index].reshape(6,1)                 # Get the desired eigenvector for eigval of 1.026
@@ -217,17 +220,17 @@ def computeManifold(Sol, samples, epsilon, T_factor, tsteps, args={}):
         STM = Sol[7:,point].reshape(6,6)             # Extract STM at sample point and resize
         delta = np.matmul(STM,vU)                    # Delta vector is STM*vU at sampled point in orbit
 
-        xU = states[:,point].reshape(6,1) +  epsilon* delta/np.linalg.norm(delta) # Create perturbed initial conditions at sampled point
+        xU = states[:,point].reshape(6,1) +  eps_switch* epsilon* delta/np.linalg.norm(delta) # Create perturbed initial conditions at sampled point
         pertVecs[:,i] = xU[:,0]                     # Save perturbed IC state vector to big matrix for convenience
-        # pertVecs[:,i+1] = xUn[:,0]
+# pertVecs[:,i+1] = xUn[:,0]
         i+=1
-    
-    
+
+
     ## Integrate pert vectors
     t0 = 0; tf = T_factor*tvec[-1]
     tspan=np.linspace(t0, tf, tsteps)
     step = (tf-t0)/tsteps
-    
+
     # Pre-create 3D array
     # states, steps = np.shape(Sol)
     manifold = np.zeros((samples, 7, tsteps))
@@ -237,8 +240,8 @@ def computeManifold(Sol, samples, epsilon, T_factor, tsteps, args={}):
         SynSol = integ.solve_ivp(fun=EOMs, t_span=[t0,tf], t_eval=tspan, y0=state0, method='DOP853', max_step = step, atol=1e-9, rtol=1e-6) # Integrate the IC with the proper time direction EOMs.
         manifold[point, 0,:] = SynSol.t
         manifold[point,1:,:] = SynSol.y[0:6,:]
-            
-    
+
+
 
     return manifold
 
@@ -251,17 +254,17 @@ def Tisserand(state,mu):
     v = state.y[3:]* (c.lstar/c.tstar)
     # print(r)
     TissCrit = np.zeros(len(state.t))
-    
+
     for i in range(len(state.t)) :
-        # print(r[:,i]) 
+        # print(r[:,i])
         a, e, I = rv2kepler(r[:,i],v[:,i],mu)
-        
+
         TissCrit[i] = 1/a + a*np.sqrt(a*(1-e**2))*np.cos(I)
     return TissCrit
 
 def JacobiConstant(state, acc):
     '''Finds the Jacobi Constant for either one set of initial conditions or at each point in an orbit.'''
-    
+
     mu = c.mustar
     rb1 = -mu
     rb2 = 1 - mu
@@ -327,11 +330,11 @@ def closeApproach(sol):
 #     At = np.matrix([[np.cos(t), -np.sin(t), 0],
 #                     [np.sin(t),  np.cos(t), 0],
 #                     [        0,          0, 1]])
-    
+
 #     J = np.matrix([[0,  1, 0],
 #                    [-1, 0, 0],
 #                    [0,  0, 0]])
-    
+
 #     rEMR =  np.matmul( np.transpose(At), rECI ) + rE
 #     vEMR = -np.matmul( np.transpose(At), vECI ) - np.matmul(J, ( rEMR + rE ))
 #     synstate = np.zeros(len(state))

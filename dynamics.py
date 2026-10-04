@@ -23,7 +23,7 @@ def SynodicEOMs(t, state):
     statedot[  3] = x + 2*vy - m1* (rb1)/ r1**3 - m2* (rb2)/ r2**3
     statedot[  4] = y - 2*vx - m1*     y/ r1**3 - m2*     y/ r2**3
     statedot[  5] =          - m1*     z/ r1**3 - m2*     z/ r2**3
-    
+
     # Create STM derivative KoonLoMarRoss2011 pg159
     Uxx = 1 - (1-mu)*(r1**2-3*rb1**2)/r1**5 - mu*(r2**2-3*rb2**2)/r2**5
     Uxy = 3*y*(1-mu)*rb1/r1**5 + 3*mu*y*rb2/r2**5
@@ -76,16 +76,16 @@ def BackwardEOMs(t, state):
     m1 = 1 - mu
     m2 = mu
 
-    rb1 = -mu
+    rb1 = mu
     rb2 = 1 - mu
 
-    r1 = np.sqrt( (x - rb1)**2 + y**2 + z**2 )          # Magnitude of r1-sat vector
+    r1 = np.sqrt( (x + rb1)**2 + y**2 + z**2 )          # Magnitude of r1-sat vector
     r2 = np.sqrt( (x - rb2)**2 + y**2 + z**2 )          # Magnitude of r2-sat vector
 
     statedot = np.zeros(len(state))
 
     statedot[0:3] = -state[3:6]
-    statedot[3]   = -(x + 2*vy - m1* (x-rb1)/ r1**3 - m2* (x-rb2)/ r2**3)
+    statedot[3]   = -(x + 2*vy - m1* (x+rb1)/ r1**3 - m2* (x-rb2)/ r2**3)
     statedot[4]   = -(y - 2*vx - m1*    y   / r1**3 - m2*    y   / r2**3)
     statedot[5]   = -(          -m1*    z   / r1**3 - m2*    z   / r2**3)
 
@@ -121,7 +121,7 @@ def SailSynodicEOMs(t, state):
     mustar = c.mustar
     mu4 = c.sunMass/(c.earthMass+c.moonMass)
     L = c.AU/c.lstar
-    
+
     m1 = 1 - mustar
     m2 = mustar
 
@@ -133,7 +133,7 @@ def SailSynodicEOMs(t, state):
 
 
     # getJC = ot.JacobiConstant(state, np.zeros((3,1)))
-    # if getJC < -2.96 : 
+    # if getJC < -2.96 :
     acc_sail = np.array([c.a_0*np.cos(c.ws*t), -c.a_0*np.sin(c.ws*t), 0])
     # else:
     #     acc_sail = np.zeros((3,1))
@@ -145,7 +145,7 @@ def SailSynodicEOMs(t, state):
     # acc_sun = np.array([-mu4*a/ (a**2 + b**2 )**(3/2) - mu4*(x-a)/( (x-a)**2 + (y+b)**2 + z**2)**(3/2),
     #                    mu4*b/ (a**2 + b**2 )**(3/2) - mu4*(y+b)/( (x-a)**2 + (y+b)**2 + z**2)**(3/2),
     #                   -mu4*z/( (x-a)**2 + (y+b)**2 + z**2)**(3/2)])
-    
+
 
     statedot = np.zeros(len(state))
     statedot[0:3] = state[3:]
@@ -160,7 +160,7 @@ def StateTransMat(t, state, STM0):
     '''state is '''
     mu = c.mustar
     x, y, z = state[0:3]
-    
+
     Uxx = -((-2*(x + mu)**2 + y**2 +   z**2)*(1 - mu)) / ((x + mu)**2 + y**2 + z**2)**(5/2) - (mu*(y**2 + z**2 - 2*(x + mu - 1)**2)) / ((x + mu - 1)**2 + y**2 + z**2)**(5/2) + 1
     Uxy = (3*y*(-mu + 1)*(mu + x)) / ((y**2 + z**2 + (mu + x)**2)**(5/2)) + (3*mu*y*(mu + x - 1)) / ((y**2 + z**2 + (mu + x - 1)**2)**(5/2))
     Uxz = (3*z*(-mu + 1)*(mu + x)) / ((y**2 + z**2 + (mu + x)**2)**(5/2)) + (3*mu*z*(mu + x - 1)) / ((y**2 + z**2 + (mu + x - 1)**2)**(5/2))
